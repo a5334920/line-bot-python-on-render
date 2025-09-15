@@ -1,0 +1,7 @@
+Flask
+gunicorn
+line-bot-sdk
+yfinance
+pandas
+apscheduler
+psycopg2-binary
