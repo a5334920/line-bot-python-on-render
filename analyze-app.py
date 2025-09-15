@@ -78,21 +78,21 @@ def analyze_stock(stock_code):
 
     if is_market_open():
         # --- 盤中先試 1d 30m ---
-        data_source = "1d 30m"
+        data_source = "1d 5m"
         for attempt in range(max_retries):
             try:
-                df = yf.download(stock_code, period="1d", interval="30m", prepost=True, progress=False)
-                if df is not None and not df.empty and len(df) >= 3:  # 至少要有3筆
-                    print(f"[INFO] {stock_code} downloaded with 1d 30m")
+                df = yf.download(stock_code, period="1d", interval="5m", prepost=True, progress=False)
+                if df is not None and not df.empty and len(df) >= 5:  # 至少要有5筆
+                    print(f"[INFO] {stock_code} downloaded with 1d 5m")
                     break
             except Exception as e:
                 print(f"[ERROR] {stock_code} yf.download (1d 30m) attempt {attempt+1}/{max_retries} failed: {e}")
                 if attempt == max_retries - 1:
                     break
 
-        # --- 如果 1d 30m 不夠，改 5d 1d ---
-        if df is None or df.empty or len(df) < 3:
-            print(f"[WARN] {stock_code} 1d 30m insufficient, falling back to 5d 1d")
+        # --- 如果 1d 5m 不夠，改 5d 1d ---
+        if df is None or df.empty or len(df) < 5:
+            print(f"[WARN] {stock_code} 1d 5m insufficient, falling back to 5d 1d")
             data_source = "5d 1d"
             for attempt in range(max_retries):
                 try:
@@ -160,7 +160,7 @@ def analyze_stock(stock_code):
     df_clean = df.dropna(subset=['Close', 'MA5', 'MA20', 'K', 'D'])
     if df_clean.empty or len(df_clean) < 3:  # 確保至少3筆有效數據
         print(f"[WARN] {stock_code} insufficient cleaned data rows: {len(df_clean)}")
-        note = "資料筆數不足，建議開盤後重試" if data_source == "5d 1d" else "開盤還未 30min或資料數<3筆數不足，建議稍後重試"
+        note = "資料筆數不足，建議開盤後重試" if data_source == "5d 1d" else "開盤還未 30min或資料數<5筆數不足，建議稍後重試"
         return f"{stock_code} 資料不足，無法分析（有效列數 {len(df_clean)}，{note})"
 
     try:
@@ -204,7 +204,7 @@ def analyze_stock(stock_code):
         expected_return = 0.0
 
     # 說明邏輯
-    note = f"目前是以 {data_source} 當沖條件" if data_source == "1d 30m" else f"開盤還未30min或資料數<3或目前非盤中，故沒有資料，將以 {data_source} 使用近 5 日日線資料進行分析"
+    note = f"目前是以 {data_source} 當沖條件" if data_source == "1d 5m" else f"開盤還未30min或資料數<5或目前非盤中，故沒有資料，將以 {data_source} 使用近 5 日日線資料進行分析"
 
     report = (
         f"📊 {stock_code}\n"
