@@ -1,66 +1,37 @@
 services:
-- type: web
-  name: stock-line-bot
-  env: python
-  repo: https://github.com/line/line-bot-sdk-python.git
-  buildCommand: "pip install -r requirements.txt"
-  startCommand: "python analyze-app.py"
-  plan: free
-  autoDeploy: false
-  envVars:
-  - key: LINE_CHANNEL_ACCESS_TOKEN
-    sync: false
-  - key: LINE_CHANNEL_SECRET
-    sync: false
-# - type: web
-#   name: line-bot-python-flask-with-handler
-#   env: python
-#   repo: https://github.com/line/line-bot-sdk-python.git
-#   buildCommand: cd examples/flask-echo;pip install gunicorn -r requirements.txt
-#   startCommand: cd examples/flask-echo;gunicorn app_with_handler:app
-#   plan: free
-#   autoDeploy: false
-#   envVars:
-#   - key: LINE_CHANNEL_ACCESS_TOKEN
-#     sync: false
-#   - key: LINE_CHANNEL_SECRET
-#     sync: false
-# - type: web
-#   name: line-bot-python-flask-kitchensink
-#   env: python
-#   repo: https://github.com/line/line-bot-sdk-python.git
-#   buildCommand: cd examples/flask-kitchensink;pip install gunicorn -r requirements.txt
-#   startCommand: cd examples/flask-kitchensink;gunicorn app:app
-#   plan: free
-#   autoDeploy: false
-#   envVars:
-#   - key: LINE_CHANNEL_ACCESS_TOKEN
-#     sync: false
-#   - key: LINE_CHANNEL_SECRET
-#     sync: false
-# - type: web
-#   name: line-bot-python-simple-server
-#   env: python
-#   repo: https://github.com/line/line-bot-sdk-python.git
-#   buildCommand: cd examples/simple-server-echo;pip install -r requirements.txt
-#   startCommand: cd examples/simple-server-echo;python app.py
-#   plan: free
-#   autoDeploy: false
-#   envVars:
-#   - key: LINE_CHANNEL_ACCESS_TOKEN
-#     sync: false
-#   - key: LINE_CHANNEL_SECRET
-#     sync: false
-# - type: web
-#   name: line-bot-python-aiohttp
-#   env: python
-#   repo: https://github.com/line/line-bot-sdk-python.git
-#   buildCommand: cd examples/aiohttp-echo;pip install -r requirements.txt
-#   startCommand: cd examples/aiohttp-echo;python app.py
-#   plan: free
-#   autoDeploy: false
-#   envVars:
-#   - key: LINE_CHANNEL_ACCESS_TOKEN
-#     sync: false
-#   - key: LINE_CHANNEL_SECRET
-#     sync: false
+  # Web service：LINE Bot 主程式
+  - type: web
+    name: stock-line-bot
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    # 用 analyze-app.py 作為入口
+    startCommand: gunicorn analyze-app:app --bind 0.0.0.0:$PORT
+    autoDeploy: true
+    envVars:
+      - key: LINE_CHANNEL_ACCESS_TOKEN
+        sync: false
+      - key: LINE_CHANNEL_SECRET
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+
+  # 排程服務：定時檢查提醒
+  - type: worker
+    name: stock-alert-scheduler
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python scheduler.py
+    autoDeploy: true
+    envVars:
+      - key: LINE_CHANNEL_ACCESS_TOKEN
+        sync: false
+      - key: LINE_CHANNEL_SECRET
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+
+databases:
+  - name: stock-analyzer-db
+    plan: free
