@@ -86,7 +86,7 @@ def analyze_stock(stock_code):
                     print(f"[INFO] {stock_code} downloaded with 1d 5m")
                     break
             except Exception as e:
-                print(f"[ERROR] {stock_code} yf.download (1d 30m) attempt {attempt+1}/{max_retries} failed: {e}")
+                print(f"[ERROR] {stock_code} yf.download (1d 5m) attempt {attempt+1}/{max_retries} failed: {e}")
                 if attempt == max_retries - 1:
                     break
 
