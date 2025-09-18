@@ -140,17 +140,17 @@ def analyze_stock(stock_code):
     #if df is None or df.empty:
     #    print(f"[WARN] {stock_code} download empty after fallbacks")
     #    return f"{stock_code} 無法取得資料 (市場可能未開或延遲，請稍後重試)"
-    if is_market_open():
-        for attempt in range(max_retries):
-            try:
-                df = yf.download(stock_code, period="7d", interval="30m", progress=False)
-                if df is not None and not df.empty:
-                    print(f"[INFO] {stock_code} downloaded with 7d 30m")
-                    break
-            except Exception as e:
-                print(f"[ERROR] {stock_code} yf.download (7d 30m) attempt {attempt+1}/{max_retries} failed: {e}")
-                if attempt == max_retries - 1:
-                    return f"{stock_code} 資料下載失敗: {e}"
+    #if is_market_open():
+    for attempt in range(max_retries):
+        try:
+            df = yf.download(stock_code, period="7d", interval="30m", progress=False)
+            if df is not None and not df.empty:
+                print(f"[INFO] {stock_code} downloaded with 7d 30m")
+                break
+        except Exception as e:
+            print(f"[ERROR] {stock_code} yf.download (7d 30m) attempt {attempt+1}/{max_retries} failed: {e}")
+            if attempt == max_retries - 1:
+                return f"{stock_code} 資料下載失敗: {e}"
 
     if df is None or df.empty:
         return f"{stock_code} 無法取得資料，請稍後再試"
