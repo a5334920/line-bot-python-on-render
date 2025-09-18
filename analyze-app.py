@@ -25,7 +25,7 @@ def is_market_open():
 
 app = Flask(__name__)
 
-# ---- 環境變數 (Heroku 上要設定) ----
+# ---- 環境變數 (Heroku /Render 上要設定) ----
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
 
