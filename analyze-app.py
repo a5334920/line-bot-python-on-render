@@ -97,50 +97,6 @@ def analyze_stock(stock_code):
     data_source = None
     max_retries = 3
 
-    #if is_market_open():
-    #    # --- 盤中先試 1d 30m ---
-    #    data_source = "1d 5m"
-    #    for attempt in range(max_retries):
-    #        try:
-    #            df = yf.download(stock_code, period="1d", interval="5m", prepost=True, progress=False)
-    #            if df is not None and not df.empty and len(df) >= 3:  # 至少要有3筆
-    #                print(f"[INFO] {stock_code} downloaded with 1d 5m")
-    #                break
-    #        except Exception as e:
-    #            print(f"[ERROR] {stock_code} yf.download (1d 5m) attempt {attempt+1}/{max_retries} failed: {e}")
-    #            if attempt == max_retries - 1:
-    #                break
-    #    # --- 如果 1d 5m 不夠，改 5d 1d ---
-    #    if df is None or df.empty or len(df) < 3:
-    #        print(f"[WARN] {stock_code} 1d 5m insufficient, falling back to 5d 1d")
-    #        data_source = "5d 1d"
-    #        for attempt in range(max_retries):
-    #            try:
-    #                df = yf.download(stock_code, period="5d", interval="1d", progress=False)
-    #                if df is not None and not df.empty:
-    #                    print(f"[INFO] {stock_code} downloaded with 5d 1d")
-    #                    break
-    #            except Exception as e:
-    #                print(f"[ERROR] {stock_code} yf.download (5d 1d) attempt {attempt+1}/{max_retries} failed: {e}")
-    #                if attempt == max_retries - 1:
-    #                    return f"{stock_code} 資料下載失敗: {e}"
-    #else:
-    #    # --- 非開盤時間，直接用 5d 1d ---
-    #    data_source = "5d 1d"
-    #    for attempt in range(max_retries):
-    #        try:
-    #            df = yf.download(stock_code, period="5d", interval="1d", progress=False)
-    #            if df is not None and not df.empty:
-    #                print(f"[INFO] {stock_code} downloaded with 5d 1d (non-market hours)")
-    #                break
-    #        except Exception as e:
-    #            print(f"[ERROR] {stock_code} yf.download (5d 1d) attempt {attempt+1}/{max_retries} failed: {e}")
-    #            if attempt == max_retries - 1:
-    #                return f"{stock_code} 資料下載失敗: {e}"
-    #if df is None or df.empty:
-    #    print(f"[WARN] {stock_code} download empty after fallbacks")
-    #    return f"{stock_code} 無法取得資料 (市場可能未開或延遲，請稍後重試)"
-    #if is_market_open():
     for attempt in range(max_retries):
         try:
             df = yf.download(stock_code, period="7d", interval="30m", progress=False)
