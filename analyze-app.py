@@ -36,6 +36,29 @@ line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
 # ---- 分析函式 ----
+def _calculate_support_resistance_from_bullish(df, days=7):
+    """
+    從最近 N 天的陽線 (Close > Open) 計算支撐與壓力
+    壓力 = 陽線最高價平均
+    支撐 = 陽線最低價平均
+    """
+    if df is None or df.empty:
+        return None, None
+
+    # 取最近 N 天資料
+    df_recent = df.last(f"{days}D")
+
+    # 篩選陽線：收盤價 > 開盤價
+    bullish = df_recent[df_recent['Close'] > df_recent['Open']]
+
+    if bullish.empty:
+        return None, None
+
+    support = bullish['Low'].mean()
+    resistance = bullish['High'].mean()
+
+    return round(support, 2), round(resistance, 2)
+
 def _ensure_single_ticker_df(df, code):
     if isinstance(df.columns, pd.MultiIndex):
         try:
@@ -74,52 +97,63 @@ def analyze_stock(stock_code):
     data_source = None
     max_retries = 3
 
+    #if is_market_open():
+    #    # --- 盤中先試 1d 30m ---
+    #    data_source = "1d 5m"
+    #    for attempt in range(max_retries):
+    #        try:
+    #            df = yf.download(stock_code, period="1d", interval="5m", prepost=True, progress=False)
+    #            if df is not None and not df.empty and len(df) >= 3:  # 至少要有3筆
+    #                print(f"[INFO] {stock_code} downloaded with 1d 5m")
+    #                break
+    #        except Exception as e:
+    #            print(f"[ERROR] {stock_code} yf.download (1d 5m) attempt {attempt+1}/{max_retries} failed: {e}")
+    #            if attempt == max_retries - 1:
+    #                break
+    #    # --- 如果 1d 5m 不夠，改 5d 1d ---
+    #    if df is None or df.empty or len(df) < 3:
+    #        print(f"[WARN] {stock_code} 1d 5m insufficient, falling back to 5d 1d")
+    #        data_source = "5d 1d"
+    #        for attempt in range(max_retries):
+    #            try:
+    #                df = yf.download(stock_code, period="5d", interval="1d", progress=False)
+    #                if df is not None and not df.empty:
+    #                    print(f"[INFO] {stock_code} downloaded with 5d 1d")
+    #                    break
+    #            except Exception as e:
+    #                print(f"[ERROR] {stock_code} yf.download (5d 1d) attempt {attempt+1}/{max_retries} failed: {e}")
+    #                if attempt == max_retries - 1:
+    #                    return f"{stock_code} 資料下載失敗: {e}"
+    #else:
+    #    # --- 非開盤時間，直接用 5d 1d ---
+    #    data_source = "5d 1d"
+    #    for attempt in range(max_retries):
+    #        try:
+    #            df = yf.download(stock_code, period="5d", interval="1d", progress=False)
+    #            if df is not None and not df.empty:
+    #                print(f"[INFO] {stock_code} downloaded with 5d 1d (non-market hours)")
+    #                break
+    #        except Exception as e:
+    #            print(f"[ERROR] {stock_code} yf.download (5d 1d) attempt {attempt+1}/{max_retries} failed: {e}")
+    #            if attempt == max_retries - 1:
+    #                return f"{stock_code} 資料下載失敗: {e}"
+    #if df is None or df.empty:
+    #    print(f"[WARN] {stock_code} download empty after fallbacks")
+    #    return f"{stock_code} 無法取得資料 (市場可能未開或延遲，請稍後重試)"
     if is_market_open():
-        # --- 盤中先試 1d 30m ---
-        data_source = "1d 5m"
         for attempt in range(max_retries):
             try:
-                df = yf.download(stock_code, period="1d", interval="5m", prepost=True, progress=False)
-                if df is not None and not df.empty and len(df) >= 3:  # 至少要有3筆
-                    print(f"[INFO] {stock_code} downloaded with 1d 5m")
-                    break
-            except Exception as e:
-                print(f"[ERROR] {stock_code} yf.download (1d 5m) attempt {attempt+1}/{max_retries} failed: {e}")
-                if attempt == max_retries - 1:
-                    break
-
-        # --- 如果 1d 5m 不夠，改 5d 1d ---
-        if df is None or df.empty or len(df) < 3:
-            print(f"[WARN] {stock_code} 1d 5m insufficient, falling back to 5d 1d")
-            data_source = "5d 1d"
-            for attempt in range(max_retries):
-                try:
-                    df = yf.download(stock_code, period="5d", interval="1d", progress=False)
-                    if df is not None and not df.empty:
-                        print(f"[INFO] {stock_code} downloaded with 5d 1d")
-                        break
-                except Exception as e:
-                    print(f"[ERROR] {stock_code} yf.download (5d 1d) attempt {attempt+1}/{max_retries} failed: {e}")
-                    if attempt == max_retries - 1:
-                        return f"{stock_code} 資料下載失敗: {e}"
-
-    else:
-        # --- 非開盤時間，直接用 5d 1d ---
-        data_source = "5d 1d"
-        for attempt in range(max_retries):
-            try:
-                df = yf.download(stock_code, period="5d", interval="1d", progress=False)
+                df = yf.download(stock_code, period="7d", interval="30m", progress=False)
                 if df is not None and not df.empty:
-                    print(f"[INFO] {stock_code} downloaded with 5d 1d (non-market hours)")
+                    print(f"[INFO] {stock_code} downloaded with 7d 30m")
                     break
             except Exception as e:
-                print(f"[ERROR] {stock_code} yf.download (5d 1d) attempt {attempt+1}/{max_retries} failed: {e}")
+                print(f"[ERROR] {stock_code} yf.download (7d 30m) attempt {attempt+1}/{max_retries} failed: {e}")
                 if attempt == max_retries - 1:
                     return f"{stock_code} 資料下載失敗: {e}"
 
     if df is None or df.empty:
-        print(f"[WARN] {stock_code} download empty after fallbacks")
-        return f"{stock_code} 無法取得資料 (市場可能未開或延遲，請稍後重試)"
+        return f"{stock_code} 無法取得資料，請稍後再試"
 
     df = _ensure_single_ticker_df(df, stock_code)
     df['MA5'] = df['Close'].rolling(window=5, min_periods=1).mean()
@@ -128,9 +162,7 @@ def analyze_stock(stock_code):
 
     df_clean = df.dropna(subset=['Close', 'MA5', 'MA20', 'K', 'D'])
     if df_clean.empty or len(df_clean) < 3:  # 確保至少3筆有效數據
-        print(f"[WARN] {stock_code} insufficient cleaned data rows: {len(df_clean)}")
-        note = "資料筆數不足，建議開盤後重試" if data_source == "5d 1d" else "開盤資料數<3筆數不足，建議稍後重試"
-        return f"{stock_code} 資料不足，無法分析（有效列數 {len(df_clean)}，{note})"
+        return f"{stock_code} 資料不足，無法分析（有效列數 {len(df_clean)}）"
 
     try:
         last_close = float(df_clean['Close'].iloc[-1])
@@ -142,13 +174,21 @@ def analyze_stock(stock_code):
         print(f"[ERROR] {stock_code} value extraction failed: {e}")
         return f"{stock_code} 資料解析失敗: {e}"
 
-    recent_n = min(5, len(df_clean))
-    support = float(df_clean['Low'].tail(recent_n).median())
-    resistance = float(df_clean['High'].tail(recent_n).median())
-    support = round(support, 2)  # 改進：保留兩位小數，提升精確度
-    resistance = round(resistance, 2)
+    #recent_n = min(5, len(df_clean))
+    #support = float(df_clean['Low'].tail(recent_n).median())
+    #resistance = float(df_clean['High'].tail(recent_n).median())
+    #support = round(support, 2)  # 改進：保留兩位小數，提升精確度
+    #resistance = round(resistance, 2)
 
+    # --- 改用「近 7 天陽線」計算支撐壓力 ---
+    support, resistance = _calculate_support_resistance_from_bullish(df_clean, days=7)
+    if support is None or resistance is None:
+        return f"{stock_code} 找不到足夠的陽線資料，無法計算支撐/壓力"
+
+    # 均線訊號
     ma_signal = "短期均線突破長期均線，趨勢轉強" if ma5 > ma20 else "短期均線在長期均線下方，趨勢偏弱"
+    
+    # KD 訊號
     if last_k > last_d:
         kd_signal = f"黃金交叉，偏多 (K={last_k:.1f}, D={last_d:.1f})"
         if last_k > 80:  # 改進：添加超買警告
@@ -172,9 +212,6 @@ def analyze_stock(stock_code):
         advice = "建議: HOLD ⏸"
         expected_return = 0.0
 
-    # 說明邏輯
-    note = f"目前是以 {data_source} 當沖條件" if data_source == "1d 5m" else f"開盤資料數<3或目前非盤中，故沒有資料，將以 {data_source} 使用近 5 日日線資料進行分析"
-
     report = (
         f"📊 {stock_code}\n"
         f"收盤價: {last_close:.2f}\n"
@@ -183,7 +220,6 @@ def analyze_stock(stock_code):
         f"MA 判斷: {ma_signal}\n"
         f"KD 判斷: {kd_signal}\n"
         f"{advice}\n"
-        f"備註: {note}"
     )
 
     print(f"[INFO] {stock_code} processed: rows={len(df_clean)}, last_close={last_close}, ma5={ma5}, ma20={ma20}, K={last_k:.2f}, D={last_d:.2f}")
