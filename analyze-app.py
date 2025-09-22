@@ -5,7 +5,8 @@ from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
-from datetime import datetime, time
+from datetime import datetime
+import time  # Changed to standard time module
 import pytz  # 加入 pytz 模組
 import re
 
