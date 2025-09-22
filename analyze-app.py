@@ -9,6 +9,24 @@ from datetime import datetime, time
 import pytz  # 加入 pytz 模組
 import re
 
+
+#======讓render不會睡著======
+import threading 
+import requests
+def wake_up_render():
+    while 1==1:
+        url = 'https://line-bot-python-on-render-0v9a.onrender.com/' + 'render_wake_up'
+        res = requests.get(url)
+        if res.status_code==200:
+            print('喚醒render成功')
+        else:
+            print('喚醒失敗')
+        time.sleep(10*60)
+
+threading.Thread(target=wake_up_render).start()
+#======讓render不會睡著======
+
+
 def is_stock_code(text: str) -> bool:
     """判斷輸入是否為台灣股票代碼 (上市 .TW 或 上櫃 .TWO)"""
     return bool(re.match(r"^\d{4}(\.(TW|TWO))?$", text.strip()))
@@ -193,6 +211,9 @@ def callback():
         abort(400)
     return "OK"
 
+@app.route("/render_wake_up")
+def render_wake_up():
+    return "Hey!Wake Up!!"
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
