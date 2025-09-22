@@ -24,7 +24,7 @@ def wake_up_render():
         time.sleep(10*60)
 
 threading.Thread(target=wake_up_render).start()
-#======讓render不會睡著======
+#======讓render不會睡著===end===
 
 
 def is_stock_code(text: str) -> bool:
